@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (item.getItemId() == R.id.add_place) {
             Intent intent = new Intent(MainActivity.this, MapsActivity.class);
+            intent.putExtra("info", "new");
             startActivity(intent);
         }
         return super.onOptionsItemSelected(item);

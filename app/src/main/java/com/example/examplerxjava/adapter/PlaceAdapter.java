@@ -38,6 +38,8 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceHolder>
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(holder.itemView.getContext(), MapsActivity.class);
+                intent.putExtra("info", "old");
+                intent.putExtra("place", placeList.get(holder.getAdapterPosition())); //Listeden bir Place objesi gönderiyoruz, Place sınıfını Serializable etmemiz gerekir.
                 holder.itemView.getContext().startActivity(intent);
             }
         });

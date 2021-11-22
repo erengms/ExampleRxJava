@@ -60,6 +60,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
+    private Place selectedPlace;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +75,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         registerLauncher();
+
+        binding.saveButton.setEnabled(false);
 
          sharedPreferences = MapsActivity.this.getSharedPreferences("com.example.examplerxjava", MODE_PRIVATE);
          info = false;
@@ -106,12 +110,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
              @Override
              public void onClick(View v) {
 
-
-                /* compositeDisposable.delete(placeDao.delete()
-                 .subscribeOn(Schedulers.io())
-                 .observeOn(AndroidSchedulers.mainThread())
-                 .subscribe(MapsActivity.this::handleResponse)
-                 );*/
+                 if (selectedPlace != null) {
+                     compositeDisposable.delete(placeDao.delete(selectedPlace)
+                             .subscribeOn(Schedulers.io())
+                             .observeOn(AndroidSchedulers.mainThread())
+                             .subscribe(MapsActivity.this::handleResponse)
+                     );
+                 }
 
              }
          });
@@ -131,56 +136,77 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.setOnMapLongClickListener(this);//long click'i set edelim
 
-        binding.saveButton.setEnabled(false);
+        Intent intent = getIntent();
+        String intentInfo = intent.getStringExtra("info");
 
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(@NonNull Location location) {
+        if (intentInfo.equals("new")){
+            binding.saveButton.setVisibility(View.VISIBLE);
+            binding.deleteButton.setVisibility(View.GONE);
 
-                //shared pref'e yazalım, location her değiştiğinde kamera oraya kaymasın
-                info = sharedPreferences.getBoolean("info", false);
-                if (!info){
-                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
+            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(@NonNull Location location) {
 
-                    sharedPreferences.edit().putBoolean("info", true).apply();
+                    //shared pref'e yazalım, location her değiştiğinde kamera oraya kaymasın
+                    info = sharedPreferences.getBoolean("info", false);
+                    if (!info){
+                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
+
+                        sharedPreferences.edit().putBoolean("info", true).apply();
+                    }
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+            };
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)){
+                    Snackbar.make(binding.getRoot(), "Haritalar için izin vermelisiniz", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("Tamam", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // requestPermission
+                                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                                }
+                            }).show();
+                } else {
+                    //request permission
+                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
                 }
             }
+            else {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0 , 0, locationListener);
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
+                Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (lastLocation != null){
+                    LatLng lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLatLng, 13));
+                }
 
+                mMap.setMyLocationEnabled(true); // konumumuzu mavi nokta olarak haritada gösterir.
             }
-        };
+        } else {
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            mMap.clear();
+            selectedPlace = (Place) intent.getSerializableExtra("place");
 
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)){
-                Snackbar.make(binding.getRoot(), "Haritalar için izin vermelisiniz", Snackbar.LENGTH_INDEFINITE)
-                        .setAction("Tamam", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                // requestPermission
-                                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-                            }
-                        }).show();
-            } else {
-                //request permission
-                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-            }
+            LatLng latLng = new LatLng(selectedPlace.latitude, selectedPlace.longitude);
+            mMap.addMarker(new MarkerOptions().position(latLng).title(selectedPlace.name));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
+
+            binding.placeNameText.setText(selectedPlace.name);
+            binding.saveButton.setVisibility(View.GONE);
+            binding.deleteButton.setVisibility(View.VISIBLE);
+
         }
-        else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0 , 0, locationListener);
 
-            Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (lastLocation != null){
-                LatLng lastLatLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLatLng, 13));
-            }
 
-            mMap.setMyLocationEnabled(true); // konumumuzu mavi nokta olarak haritada gösterir.
-        }
 
 
     }
