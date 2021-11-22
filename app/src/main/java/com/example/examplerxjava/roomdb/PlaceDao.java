@@ -9,17 +9,22 @@ import com.example.examplerxjava.model.Place;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+
 @Dao
 public interface PlaceDao {
 
+    //Completable, Flowable RxJava'dan gelen özellik
+
     @Insert
-    void insert(Place place);
+    public Completable insert(Place place);
 
     @Delete
-    void delete(Place place);
+    public Completable delete(Place place);
 
     @Query("SELECT *  FROM Place") //Liste döndürecek
-    List<Place> getAll();
+    public Flowable<List<Place>>  getAll();
 
     /*@Query("SELECT *  FROM Place WHERE name = :nameInput") //Filtreleme yapabiliriz getAll("test"); ismi "test" olanları getir gibi.
     List<Place> getAll(String nameInput); */

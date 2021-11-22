@@ -7,9 +7,11 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.room.Room;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -20,6 +22,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.example.examplerxjava.R;
+import com.example.examplerxjava.model.Place;
+import com.example.examplerxjava.roomdb.PlaceDao;
+import com.example.examplerxjava.roomdb.PlaceDatabase;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -28,6 +33,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.examplerxjava.databinding.ActivityMapsBinding;
 import com.google.android.material.snackbar.Snackbar;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
 
@@ -40,6 +51,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private SharedPreferences sharedPreferences;
     private boolean info;
+
+    private PlaceDatabase db;
+    private PlaceDao placeDao;
+
+    private double selectedLatitude;
+    private double selectedLongitude;
+
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +76,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
          sharedPreferences = MapsActivity.this.getSharedPreferences("com.example.examplerxjava", MODE_PRIVATE);
          info = false;
+
+         db = Room.databaseBuilder(getApplicationContext(), PlaceDatabase.class, "Places").build(); //Places database ismi
+         placeDao = db.placeDao();
+
+         selectedLatitude = 0.0;
+         selectedLongitude = 0.0;
+
+         binding.saveButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 //veri tabanı işlemlerini main thread'de yapma
+                Place place = new Place(binding.placeNameText.getText().toString(), selectedLatitude, selectedLongitude);
+
+                //thread -> Main thread (UI), Default (CPU Intensive), IO Thread(network-internetten bir veri istemek gibi- , database)
+                //placeDao.insert(place).subscribeOn(Schedulers.io()).subscribe(); //io thread de yap
+
+                 //disposable mantığıyla yapacagız, daha verimli
+                 compositeDisposable.add(placeDao.insert(place)
+                         .subscribeOn(Schedulers.io()) //io threadde çalış
+                         .observeOn(AndroidSchedulers.mainThread()) //main threadde gözlemle
+                         .subscribe(MapsActivity.this::handleResponse) //işlem bittiğinde bir metodu çalıştır. handleResponse()
+                 );
+
+             }
+         });
+
+         binding.deleteButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+
+
+                /* compositeDisposable.delete(placeDao.delete()
+                 .subscribeOn(Schedulers.io())
+                 .observeOn(AndroidSchedulers.mainThread())
+                 .subscribe(MapsActivity.this::handleResponse)
+                 );*/
+
+             }
+         });
     }
 
     /**
@@ -72,6 +130,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMapLongClickListener(this);//long click'i set edelim
+
+        binding.saveButton.setEnabled(false);
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
@@ -152,5 +212,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapLongClick(@NonNull LatLng latLng) {
         mMap.clear(); //haritayı temizle, eski markerler silinir
         mMap.addMarker(new MarkerOptions().position(latLng));
+
+        selectedLatitude = latLng.latitude;
+        selectedLongitude = latLng.longitude;
+
+        binding.saveButton.setEnabled(true);
+    }
+
+    private void handleResponse(){
+        Intent intent = new Intent(MapsActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        compositeDisposable.clear();
     }
 }
