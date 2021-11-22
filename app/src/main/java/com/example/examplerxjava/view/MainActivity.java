@@ -1,4 +1,4 @@
-package com.example.examplerxjava;
+package com.example.examplerxjava.view;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +9,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.example.examplerxjava.R;
 import com.example.examplerxjava.databinding.ActivityMainBinding;
+
 
 public class MainActivity extends AppCompatActivity {
 

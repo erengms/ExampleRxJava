@@ -15,7 +15,7 @@
         map:layout_constraintStart_toStartOf="parent"
         map:layout_constraintTop_toTopOf="parent"
         map:layout_constraintBottom_toTopOf="@+id/placeNameText"
-        tools:context=".MapsActivity" />
+        tools:context=".view.MapsActivity" />
 
     <EditText
         android:id="@+id/placeNameText"
