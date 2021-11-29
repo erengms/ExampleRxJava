@@ -38,6 +38,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
@@ -100,7 +101,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                  compositeDisposable.add(placeDao.insert(place)
                          .subscribeOn(Schedulers.io()) //io threadde çalış
                          .observeOn(AndroidSchedulers.mainThread()) //main threadde gözlemle
-                         .subscribe(MapsActivity.this::handleResponse) //işlem bittiğinde bir metodu çalıştır. handleResponse()
+                         .subscribe(new Action() { //işlem bittiğinde bir metodu çalıştır. Diğer bir kullanım
+                             @Override
+                             public void run() throws Throwable {
+                                 handleResponse();
+                             }
+                         })
                  );
 
              }
@@ -114,7 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                      compositeDisposable.delete(placeDao.delete(selectedPlace)
                              .subscribeOn(Schedulers.io())
                              .observeOn(AndroidSchedulers.mainThread())
-                             .subscribe(MapsActivity.this::handleResponse)
+                             .subscribe(MapsActivity.this::handleResponse) //işlem bittiğinde bir metodu çalıştır. handleResponse()
                      );
                  }
 
