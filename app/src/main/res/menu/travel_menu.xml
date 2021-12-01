@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/add_place" android:title="Haritadan bir yer ekleyin"></item>
+
+    <item android:id="@+id/search_all"
+          android:title="Ara"
+          android:icon="@drawable/ic_search_24"
+          app:showAsAction="ifRoom"
+          app:actionViewClass="android.widget.SearchView" />
 </menu>
