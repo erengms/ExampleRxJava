@@ -1,12 +1,16 @@
 package com.example.examplerxjava.view;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.room.Room;
 import androidx.room.rxjava3.RxRoom;
 
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -68,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         placeAdapter = new PlaceAdapter(placeList);
         binding.recyclerView.setAdapter(placeAdapter);
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

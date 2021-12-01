@@ -39,6 +39,8 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceHolder>
     @Override
     public void onBindViewHolder(@NonNull PlaceHolder holder, int position) {
         holder.recyclerRowBinding.recyclerText.setText(placeList.get(position).name);
+        holder.recyclerRowBinding.enlem.setText("Enlem: " + String.valueOf(placeList.get(position).latitude));
+        holder.recyclerRowBinding.boylam.setText("Boylam: " + String.valueOf(placeList.get(position).longitude));
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,6 +73,13 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceHolder>
 
                     for (Place item : placeListForSearch) {
                         if (item.name.toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
+                        if (String.valueOf(item.latitude).toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
+
+                        if (String.valueOf(item.longitude).toLowerCase().contains(filterPattern)) {
                             filteredList.add(item);
                         }
                     }

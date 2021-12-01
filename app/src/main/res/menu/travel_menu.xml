@@ -6,6 +6,6 @@
     <item android:id="@+id/search_all"
           android:title="Ara"
           android:icon="@drawable/ic_search_24"
-          app:showAsAction="ifRoom"
+          app:showAsAction="always"
           app:actionViewClass="android.widget.SearchView" />
 </menu>
